@@ -305,7 +305,7 @@ export const lessonPlans_grade7: LessonPlan[] = [
 
   {
     id: 'the-light-we-carry',
-    title: 'The light we carry',
+    title: 'The Light We Carry',
     audience: 'Grade 7',
     duration: '60 min',
     scripture: 'Matthew 5:14–16',
@@ -351,101 +351,109 @@ export const lessonPlans_grade7: LessonPlan[] = [
     }
   },
 
+  // -----------------------------
+  // CONFIRMATION-SPECIFIC LESSONS
+  // -----------------------------
+
   {
-    id: 'the-beatitudes',
-    title: 'The Beatitudes',
+    id: 'who-is-the-holy-spirit',
+    title: 'Who Is the Holy Spirit?',
     audience: 'Grade 7',
     duration: '60 min',
-    scripture: 'Matthew 5:1–12',
-    summary: 'Discover the surprising values of the kingdom and how they challenge our usual priorities.',
+    scripture: 'John 14:16–17',
+    summary: 'Meet the Holy Spirit, the Advocate who strengthens, guides, and dwells within us.',
     doctrine: {
-      label: 'Blessed are…',
-      passage: 'Matthew 5:1–12',
-      body: 'The Beatitudes reveal God’s upside‑down kingdom: humility, mercy, purity, and peace are the true path to happiness.'
+      label: 'The Advocate',
+      passage: 'John 14:16–17',
+      body: 'The Holy Spirit is the third Person of the Trinity, given to us in Baptism to guide, strengthen, and dwell within us.'
     },
     moral: {
-      label: 'Kingdom values',
-      body: 'Discuss how the Beatitudes contrast with social media culture, competition, and comparison.',
-      activity: 'Choose one Beatitude and write how it could change your week.'
+      label: 'Listening to the Spirit',
+      body: 'Discuss how the Spirit nudges us toward goodness, courage, and truth.',
+      activity: 'Write one area where you need the Spirit’s guidance this week.'
     },
     worship: {
-      label: 'Blessed',
-      body: 'Read one Beatitude slowly and let students reflect on it.',
-      prayer: 'Lord, shape my heart with the values of your kingdom. Amen.'
+      label: 'Come, Holy Spirit',
+      body: 'Invite a quiet moment asking the Spirit to fill their hearts.',
+      prayer: 'Come, Holy Spirit. Be my strength, my guide, and my helper. Amen.'
     }
   },
 
   {
-    id: 'forgiveness-and-mercy',
-    title: 'Forgiveness and Mercy',
+    id: 'pentecost-and-mission',
+    title: 'Pentecost and the Birth of the Church',
     audience: 'Grade 7',
     duration: '60 min',
-    scripture: 'Matthew 18:21–35',
-    summary: 'Learn why forgiveness is essential for freedom and how mercy transforms relationships.',
+    scripture: 'Acts 2:1–11',
+    summary: 'Learn how the Holy Spirit empowered the apostles and continues to empower us today.',
     doctrine: {
-      label: 'Seventy times seven',
-      passage: 'Matthew 18:21–35',
-      body: 'Jesus teaches that forgiveness is not optional. We forgive because we have been forgiven first.'
+      label: 'Filled with the Spirit',
+      passage: 'Acts 2:1–11',
+      body: 'At Pentecost, the Holy Spirit gave the apostles courage, clarity, and mission. The same Spirit strengthens us in Confirmation.'
     },
     moral: {
-      label: 'Letting go',
-      body: 'Discuss grudges, conflict, and the difficulty of forgiving when hurt.',
-      activity: 'Write a private “release note” about something you need to let go of. Tear it up afterward.'
+      label: 'Courage to witness',
+      body: 'Discuss what boldness looks like for Grade 7 students in school, home, and friendships.',
+      activity: 'Write one way you can be a witness for Christ this week.'
     },
     worship: {
-      label: 'Merciful heart',
-      body: 'Invite a quiet moment asking God for the grace to forgive.',
-      prayer: 'Lord, soften my heart and help me forgive as you forgive me. Amen.'
+      label: 'Spirit of courage',
+      body: 'Invite students to pray for boldness like the apostles.',
+      prayer: 'Holy Spirit, give me courage to live my faith with joy. Amen.'
     }
   },
 
   {
-    id: 'identity-in-christ',
-    title: 'Identity in Christ',
+    id: 'gifts-of-the-holy-spirit',
+    title: 'The Gifts of the Holy Spirit',
     audience: 'Grade 7',
     duration: '60 min',
-    scripture: 'Galatians 2:20',
-    summary: 'Reflect on how faith shapes who we are and how we see ourselves.',
+    scripture: 'Isaiah 11:1–3',
+    summary: 'Explore the seven gifts of the Holy Spirit and how they help us grow in maturity and holiness.',
     doctrine: {
-      label: 'A new life',
-      passage: 'Galatians 2:20',
-      body: 'Our identity is rooted in Christ. His life shapes our choices, relationships, and sense of worth.'
+      label: 'Seven gifts',
+      passage: 'Isaiah 11:1–3',
+      body: 'Wisdom, understanding, counsel, fortitude, knowledge, piety, and fear of the Lord strengthen us to live as mature disciples.'
     },
     moral: {
-      label: 'True self',
-      body: 'Discuss insecurity, comparison, and the pressure to perform.',
-      activity: 'Write three truths about who you are in Christ.'
+      label: 'Growing in virtue',
+      body: 'Discuss real-life examples of each gift and how they help in daily challenges.',
+      activity: 'Choose one gift you want to grow in and write why.'
     },
     worship: {
-      label: 'Beloved',
-      body: 'Invite students to repeat silently: “I am loved by God.”',
-      prayer: 'Jesus, help me see myself the way you see me. Amen.'
+      label: 'Spirit of wisdom',
+      body: 'Invite students to ask for one gift personally.',
+      prayer: 'Holy Spirit, strengthen me with your gifts so I may follow Christ faithfully. Amen.'
     }
   },
 
   {
-    id: 'the-power-of-prayer',
-    title: 'The Power of Prayer',
+    id: 'the-rite-of-confirmation',
+    title: 'The Rite of Confirmation',
     audience: 'Grade 7',
     duration: '60 min',
-    scripture: 'Philippians 4:6–7',
-    summary: 'Learn how prayer brings peace, clarity, and strength in daily challenges.',
+    scripture: 'Acts 8:14–17',
+    summary: 'Learn what happens during Confirmation and how the sacrament completes Baptismal grace.',
     doctrine: {
-      label: 'Do not be anxious',
-      passage: 'Philippians 4:6–7',
-      body: 'Prayer opens our hearts to God’s peace. It is a relationship, not a ritual.'
+      label: 'Sealed with the Spirit',
+      passage: 'Acts 8:14–17',
+      body: 'In Confirmation, we receive the laying on of hands and anointing with sacred chrism, strengthening us with the fullness of the Holy Spirit.'
     },
     moral: {
-      label: 'Talk to God',
-      body: 'Discuss stress, anxiety, and how prayer can help.',
-      activity: 'Write a short prayer about something weighing on your mind.'
+      label: 'Ready to respond',
+      body: 'Discuss choosing a sponsor, choosing a saint, and preparing the heart for the sacrament.',
+      activity: 'Write the name of a saint you admire and one reason you might choose them.'
     },
     worship: {
-      label: 'Peace',
-      body: 'Invite a breathing prayer: inhale “Come, Holy Spirit,” exhale “Give me peace.”',
-      prayer: 'Lord, calm my heart and help me trust you. Amen.'
+      label: 'Prepare my heart',
+      body: 'Invite a moment of silence asking God for readiness.',
+      prayer: 'Holy Spirit, prepare my heart to be sealed with your grace. Amen.'
     }
   },
+
+  // -----------------------------
+  // FINAL FORMATION LESSONS
+  // -----------------------------
 
   {
     id: 'the-church-and-community',

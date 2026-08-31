@@ -34,12 +34,37 @@ import './index.css'
 const parableImageUrls = import.meta.glob('../frontend/images/parables/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 const saintImageUrls = import.meta.glob('../frontend/images/saints/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 const sacramentImageUrls = import.meta.glob('../frontend/images/sacraments/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+const lessonDownloadUrls = import.meta.glob('../frontend/downloads/lessons/*/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 
 type View = 'home' | 'lessons' | 'parables' | 'saints' | 'sacraments' | 'about'
 
 const audienceFilters: Array<'All' | Audience> = ['All', 'Grade 3', 'Grade 7', 'Adults']
 const saintCategoryFilters: Array<'All' | SaintCategory> = ['All', ...saintCategories]
 const sacramentCategoryFilters: Array<'All' | SacramentCategory> = ['All', ...sacramentCategories]
+
+const audienceDownloadFolders: Record<Audience, 'grade3' | 'grade7' | 'adult'> = {
+  'Grade 3': 'grade3',
+  'Grade 7': 'grade7',
+  Adults: 'adult',
+}
+
+type LessonDownloadMap = Record<string, Record<string, Partial<Record<'pdf' | 'pptx', string>>>>
+
+const lessonDownloadMap = Object.entries(lessonDownloadUrls).reduce<LessonDownloadMap>((accumulator, [filePath, url]) => {
+  const match = filePath.match(/\/lessons\/([^/]+)\/([^/]+)\.(pdf|pptx)$/i)
+  if (!match) return accumulator
+
+  const [, folder, lessonId, extension] = match
+  const type = extension.toLowerCase() as 'pdf' | 'pptx'
+
+  const folderMap = accumulator[folder] ?? {}
+  const lessonFiles = folderMap[lessonId] ?? {}
+  lessonFiles[type] = url
+  folderMap[lessonId] = lessonFiles
+  accumulator[folder] = folderMap
+
+  return accumulator
+}, {})
 
 function App() {
   const [view, setView] = useState<View>('home')
@@ -551,7 +576,10 @@ function Lessons({ filter, setFilter, selectedLesson, openLesson, onBack }: { fi
 
 function LessonDetail({ lesson, onBack }: { lesson: LessonPlan; onBack: () => void }) {
   const sections = [{ icon: BookOpen, name: 'Doctrine', data: lesson.doctrine, color: 'bg-[#eaf1e5] text-[#315d43] dark:bg-[#2d5140] dark:text-[#d7ead2]' }, { icon: Lightbulb, name: 'Moral', data: lesson.moral, color: 'bg-[#f5edda] text-[#8b6b30] dark:bg-[#514528] dark:text-[#e6cd8e]' }, { icon: Flame, name: 'Worship', data: lesson.worship, color: 'bg-[#f3e4de] text-[#a25e4b] dark:bg-[#54352f] dark:text-[#edb5a2]' }]
-  return <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-12 sm:px-8 md:py-20 lg:px-10"><button onClick={onBack} className="mb-14 flex items-center gap-2 text-sm font-bold text-[#6a9172] transition-colors hover:text-[#315d43]"><ArrowLeft size={17} /> All lesson plans</button><div className="grid gap-14 lg:grid-cols-[.7fr_1.3fr]"><div className="animate-rise lg:sticky lg:top-10 lg:self-start"><span className="rounded-full bg-[#eaf1e5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#52725b] dark:bg-[#2d5140] dark:text-[#d7ead2]">{lesson.audience}</span><h1 className="mt-6 font-serif text-5xl leading-[.98] tracking-[-0.05em] sm:text-6xl">{lesson.title}</h1><p className="mt-7 max-w-[370px] text-[16px] leading-7 text-[#66756b] dark:text-[#b6c5b8]">{lesson.summary}</p><div className="mt-8 flex gap-5 text-xs font-semibold text-[#819087]"><span className="flex items-center gap-2"><BookOpen size={15} /> {lesson.scripture}</span><span className="flex items-center gap-2"><Clock3 size={15} /> {lesson.duration}</span></div><div className="mt-12 hidden items-center gap-2 text-xs font-bold text-[#6a9172] lg:flex"><Check size={16} /> Ready to teach</div></div><div className="animate-rise delay-1 space-y-5">{sections.map(({ icon: Icon, name, data, color }) => <section key={name} className="rounded-3xl border border-[#dfe5da] bg-[#fbfcf7] p-6 sm:p-8 dark:border-[#34453d] dark:bg-[#1d2c25]"><div className="flex items-start justify-between gap-4"><div className="flex items-center gap-4"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${color}`}><Icon size={19} /></span><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#819087]">{name}</p><h2 className="mt-1 font-serif text-2xl tracking-[-0.03em]">{data.label}</h2></div></div><span className="hidden text-[10px] font-bold uppercase tracking-[0.14em] text-[#a1afa5] sm:block">0{sections.findIndex((section) => section.name === name) + 1}</span></div><p className="mt-7 max-w-[640px] text-[15px] leading-7 text-[#596a60] dark:text-[#c2d0c3]">{data.body}</p>{'activity' in data && <div className="mt-6 border-l-2 border-[#b6d0af] pl-4"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#6a9172]">Suggested activity</p><p className="mt-2 text-[14px] leading-6 text-[#596a60] dark:text-[#c2d0c3]">{data.activity}</p></div>}{'prayer' in data && <div className="mt-6 rounded-2xl bg-[#f4f6ee] p-5 dark:bg-[#263a31]"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#a25e4b]">Prayer / song</p><p className="mt-2 font-serif text-[16px] leading-6 text-[#596a60] dark:text-[#d4e0d4]">{data.prayer}</p></div>}</section>)}</div></div></main>
+  const lessonFolder = audienceDownloadFolders[lesson.audience]
+  const availableDownloads = lessonFolder ? lessonDownloadMap[lessonFolder]?.[lesson.id] ?? {} : {}
+
+  return <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-12 sm:px-8 md:py-20 lg:px-10"><button onClick={onBack} className="mb-14 flex items-center gap-2 text-sm font-bold text-[#6a9172] transition-colors hover:text-[#315d43]"><ArrowLeft size={17} /> All lesson plans</button><div className="grid gap-14 lg:grid-cols-[.7fr_1.3fr]"><div className="animate-rise lg:sticky lg:top-10 lg:self-start"><span className="rounded-full bg-[#eaf1e5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#52725b] dark:bg-[#2d5140] dark:text-[#d7ead2]">{lesson.audience}</span><h1 className="mt-6 font-serif text-5xl leading-[.98] tracking-[-0.05em] sm:text-6xl">{lesson.title}</h1><p className="mt-7 max-w-[370px] text-[16px] leading-7 text-[#66756b] dark:text-[#b6c5b8]">{lesson.summary}</p><div className="mt-8 flex gap-5 text-xs font-semibold text-[#819087]"><span className="flex items-center gap-2"><BookOpen size={15} /> {lesson.scripture}</span><span className="flex items-center gap-2"><Clock3 size={15} /> {lesson.duration}</span></div>{Object.keys(availableDownloads).length > 0 && <div className="mt-6 flex flex-wrap gap-3">{availableDownloads.pdf && <a href={availableDownloads.pdf} download className="inline-flex items-center rounded-full bg-[#315d43] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#264d36]">Download PDF</a>}{availableDownloads.pptx && <a href={availableDownloads.pptx} download className="inline-flex items-center rounded-full border border-[#dfe5da] bg-white px-4 py-2 text-xs font-bold text-[#315d43] transition-colors hover:border-[#9fbea0] hover:bg-[#f1f7ee] dark:border-[#40544a] dark:bg-[#1d2c25] dark:text-[#d7ead2] dark:hover:border-[#6a9172]">Download PPT</a>}</div>}<div className="mt-12 hidden items-center gap-2 text-xs font-bold text-[#6a9172] lg:flex"><Check size={16} /> Ready to teach</div></div><div className="animate-rise delay-1 space-y-5">{sections.map(({ icon: Icon, name, data, color }) => <section key={name} className="rounded-3xl border border-[#dfe5da] bg-[#fbfcf7] p-6 sm:p-8 dark:border-[#34453d] dark:bg-[#1d2c25]"><div className="flex items-start justify-between gap-4"><div className="flex items-center gap-4"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${color}`}><Icon size={19} /></span><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#819087]">{name}</p><h2 className="mt-1 font-serif text-2xl tracking-[-0.03em]">{data.label}</h2></div></div><span className="hidden text-[10px] font-bold uppercase tracking-[0.14em] text-[#a1afa5] sm:block">0{sections.findIndex((section) => section.name === name) + 1}</span></div><p className="mt-7 max-w-[640px] text-[15px] leading-7 text-[#596a60] dark:text-[#c2d0c3]">{data.body}</p>{'activity' in data && <div className="mt-6 border-l-2 border-[#b6d0af] pl-4"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#6a9172]">Suggested activity</p><p className="mt-2 text-[14px] leading-6 text-[#596a60] dark:text-[#c2d0c3]">{data.activity}</p></div>}{'prayer' in data && <div className="mt-6 rounded-2xl bg-[#f4f6ee] p-5 dark:bg-[#263a31]"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#a25e4b]">Prayer / song</p><p className="mt-2 font-serif text-[16px] leading-6 text-[#596a60] dark:text-[#d4e0d4]">{data.prayer}</p></div>}</section>)}</div></div></main>
 }
 
 export default App
