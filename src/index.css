@@ -26,3 +26,4 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .delay-1 { animation-delay: 90ms; }
 .delay-2 { animation-delay: 180ms; }
 .delay-3 { animation-delay: 270ms; }
+

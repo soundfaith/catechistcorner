@@ -6,7 +6,9 @@ import {
   BookOpen,
   Check,
   ChevronDown,
+  Church,
   Clock3,
+  Cross,
   Feather,
   Flame,
   Heart,
@@ -17,30 +19,40 @@ import {
   Search,
   ScrollText,
   Sparkles,
+  Sprout,
   Sun,
+  SunMedium,
+  Wheat,
   X,
 } from 'lucide-react'
 import { lessonPlans, type Audience, type LessonPlan } from '../frontend/data/lessonPlans'
 import { parables, type Parable, type ParableAudience } from '../frontend/data/parables'
+import { sacramentCategories, sacraments, type Sacrament, type SacramentCategory } from '../frontend/data/sacraments'
 import { saintCategories, saints, type Saint, type SaintCategory } from '../frontend/data/saints'
 import './index.css'
 
 const parableImageUrls = import.meta.glob('../frontend/images/parables/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 const saintImageUrls = import.meta.glob('../frontend/images/saints/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+const sacramentImageUrls = import.meta.glob('../frontend/images/sacraments/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 
-type View = 'home' | 'lessons' | 'parables' | 'saints' | 'about'
+type View = 'home' | 'lessons' | 'parables' | 'saints' | 'sacraments' | 'about'
 
 const audienceFilters: Array<'All' | Audience> = ['All', 'Grade 3', 'Grade 7', 'Adults']
 const saintCategoryFilters: Array<'All' | SaintCategory> = ['All', ...saintCategories]
+const sacramentCategoryFilters: Array<'All' | SacramentCategory> = ['All', ...sacramentCategories]
 
 function App() {
   const [view, setView] = useState<View>('home')
   const [selectedLesson, setSelectedLesson] = useState<LessonPlan | null>(null)
   const [selectedParable, setSelectedParable] = useState<Parable | null>(null)
   const [selectedSaint, setSelectedSaint] = useState<Saint | null>(null)
+  const [selectedSacrament, setSelectedSacrament] = useState<Sacrament | null>(null)
   const [filter, setFilter] = useState<'All' | Audience>('All')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [dark, setDark] = useState(() => localStorage.getItem('cc-theme') === 'dark')
+  const [dark, setDark] = useState(() => {
+    const savedTheme = localStorage.getItem('cc-theme')
+    return savedTheme ? savedTheme === 'dark' : true
+  })
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
@@ -52,6 +64,7 @@ function App() {
     setSelectedLesson(null)
     setSelectedParable(null)
     setSelectedSaint(null)
+    setSelectedSacrament(null)
     setView('lessons')
     setMenuOpen(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -61,6 +74,7 @@ function App() {
     setSelectedParable(null)
     setSelectedLesson(null)
     setSelectedSaint(null)
+    setSelectedSacrament(null)
     setView('parables')
     setMenuOpen(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -70,7 +84,18 @@ function App() {
     setSelectedSaint(null)
     setSelectedParable(null)
     setSelectedLesson(null)
+    setSelectedSacrament(null)
     setView('saints')
+    setMenuOpen(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const openSacraments = () => {
+    setSelectedSacrament(null)
+    setSelectedSaint(null)
+    setSelectedParable(null)
+    setSelectedLesson(null)
+    setView('sacraments')
     setMenuOpen(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -79,6 +104,7 @@ function App() {
     setSelectedSaint(null)
     setSelectedParable(null)
     setSelectedLesson(null)
+    setSelectedSacrament(null)
     setView('about')
     setMenuOpen(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -94,14 +120,15 @@ function App() {
     <div className="min-h-screen overflow-x-hidden bg-[#f7f8f2] text-[#24332d] transition-colors duration-500 dark:bg-[#18231f] dark:text-[#edf2e9]">
       <header className="relative z-30 border-b border-[#dfe5da] bg-[#f7f8f2]/90 backdrop-blur-md dark:border-[#34453d] dark:bg-[#18231f]/90">
         <div className="mx-auto flex h-[76px] max-w-[1240px] items-center justify-between px-5 sm:px-8 lg:px-10">
-          <button onClick={() => { setView('home'); setSelectedLesson(null); setSelectedParable(null); setSelectedSaint(null); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="group flex items-center gap-3" aria-label="Go to homepage">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#d7ead2] text-[#346148] transition-transform group-hover:rotate-[-8deg] dark:bg-[#2d5140] dark:text-[#d7ead2]"><Feather size={19} strokeWidth={1.8} /></span>
+          <button onClick={() => { setView('home'); setSelectedLesson(null); setSelectedParable(null); setSelectedSaint(null); setSelectedSacrament(null); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="group flex items-center gap-3" aria-label="Go to homepage">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#d7ead2] text-[#346148] transition-transform group-hover:rotate-[-8deg] dark:bg-[#2d5140] dark:text-[#d7ead2]"><Sprout size={19} strokeWidth={1.8} /></span>
             <span className="font-serif text-[20px] tracking-[-0.03em] text-[#24332d] dark:text-[#edf2e9]">Catechist<span className="text-[#6a9172]">Corner</span></span>
           </button>
           <nav className="hidden items-center gap-8 text-[13px] font-semibold text-[#6b786d] md:flex dark:text-[#b6c5b8]">
             <button onClick={() => openLessons()} className="transition-colors hover:text-[#346148] dark:hover:text-[#d7ead2]">Lesson plans</button>
             <button onClick={openParables} className="transition-colors hover:text-[#346148] dark:hover:text-[#d7ead2]">Parables</button>
             <button onClick={openSaints} className="transition-colors hover:text-[#346148] dark:hover:text-[#d7ead2]">Saints</button>
+            <button onClick={openSacraments} className="transition-colors hover:text-[#346148] dark:hover:text-[#d7ead2]">Sacraments</button>
             <button onClick={openAbout} className="transition-colors hover:text-[#346148] dark:hover:text-[#d7ead2]">About</button>
           </nav>
           <button onClick={() => setMenuOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d5ddd2] text-[#456050] transition-all hover:border-[#6a9172] hover:bg-[#eaf1e5] dark:border-[#40544a] dark:text-[#d7ead2] dark:hover:bg-[#263a31]" aria-label="Open menu"><Menu size={20} /></button>
@@ -117,29 +144,40 @@ function App() {
             <button onClick={() => openLessons()} className="flex w-full items-center justify-between border-b border-[#dfe5da] py-4 text-left dark:border-[#34453d]">Lesson plans <ArrowRight size={18} /></button>
             <button onClick={openParables} className="flex w-full items-center justify-between border-b border-[#dfe5da] py-4 text-left dark:border-[#34453d]">Parables <ArrowRight size={18} /></button>
             <button onClick={openSaints} className="flex w-full items-center justify-between border-b border-[#dfe5da] py-4 text-left dark:border-[#34453d]">Saints <ArrowRight size={18} /></button>
+            <button onClick={openSacraments} className="flex w-full items-center justify-between border-b border-[#dfe5da] py-4 text-left dark:border-[#34453d]">Sacraments <ArrowRight size={18} /></button>
             <button onClick={openAbout} className="flex w-full items-center justify-between border-b border-[#dfe5da] py-4 text-left dark:border-[#34453d]">About CatechistCorner <ArrowRight size={18} /></button>
           </div>
           <div className="mt-auto border-t border-[#dfe5da] pt-6 dark:border-[#34453d]"><button onClick={() => setDark(!dark)} className="flex w-full items-center justify-between text-sm font-semibold"><span className="flex items-center gap-3">{dark ? <Moon size={18} /> : <Sun size={18} />} {dark ? 'Dark theme' : 'Light theme'}</span><span className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${dark ? 'bg-[#6a9172]' : 'bg-[#cad5c5]'}`}><span className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${dark ? 'translate-x-5' : ''}`} /></span></button></div>
         </aside>
       </>}
 
-      {view === 'home' ? <Home openLessons={openLessons} openParables={openParables} openSaints={openSaints} /> : view === 'lessons' ? <Lessons filter={filter} setFilter={setFilter} selectedLesson={selectedLesson} openLesson={openLesson} onBack={() => setSelectedLesson(null)} /> : view === 'parables' ? <Parables selectedParable={selectedParable} openParable={setSelectedParable} onBack={() => setSelectedParable(null)} /> : view === 'saints' ? <Saints selectedSaint={selectedSaint} openSaint={setSelectedSaint} onBack={() => setSelectedSaint(null)} /> : <About />}
+      {view === 'home' ? <Home openLessons={openLessons} openParables={openParables} openSaints={openSaints} openSacraments={openSacraments} /> : view === 'lessons' ? <Lessons filter={filter} setFilter={setFilter} selectedLesson={selectedLesson} openLesson={openLesson} onBack={() => setSelectedLesson(null)} /> : view === 'parables' ? <Parables selectedParable={selectedParable} openParable={setSelectedParable} onBack={() => setSelectedParable(null)} /> : view === 'saints' ? <Saints selectedSaint={selectedSaint} openSaint={setSelectedSaint} onBack={() => setSelectedSaint(null)} /> : view === 'sacraments' ? <Sacraments selectedSacrament={selectedSacrament} openSacrament={setSelectedSacrament} onBack={() => setSelectedSacrament(null)} /> : <About />}
       <footer className="border-t border-[#dfe5da] px-5 py-8 dark:border-[#34453d]"><div className="mx-auto flex max-w-[1240px] flex-col justify-between gap-3 text-[12px] text-[#819087] sm:flex-row"><span>© 2026 CatechistCorner</span><span>Made for the people who make room for faith.</span></div></footer>
     </div>
   )
 }
 
-function Home({ openLessons, openParables, openSaints }: { openLessons: (filter?: 'All' | Audience) => void; openParables: () => void; openSaints: () => void }) {
+function Home({ openLessons, openParables, openSaints, openSacraments }: { openLessons: (filter?: 'All' | Audience) => void; openParables: () => void; openSaints: () => void; openSacraments: () => void }) {
   return <main>
-    <section className="relative isolate overflow-hidden border-b border-[#dfe5da] dark:border-[#34453d]">
-      <div className="absolute -right-24 -top-32 -z-10 h-[480px] w-[480px] rounded-full bg-[#e4efdc] dark:bg-[#21372d]" />
-      <div className="absolute bottom-[-250px] left-[-100px] -z-10 h-[430px] w-[430px] rounded-full border border-[#d8e6d4] dark:border-[#2b4538]" />
-      <div className="mx-auto grid max-w-[1240px] items-center gap-12 px-5 pb-20 pt-20 sm:px-8 md:pb-28 md:pt-28 lg:grid-cols-[1.06fr_.94fr] lg:px-10">
-        <div className="animate-rise"><p className="mb-7 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]"><Sparkles size={14} /> Faith formation, made ready</p><h1 className="max-w-[650px] font-serif text-[clamp(3.6rem,7vw,6.4rem)] leading-[.94] tracking-[-0.055em] text-[#24332d] dark:text-[#edf2e9]">Make space for<br /><em className="font-serif text-[#6a9172]">wonder.</em></h1><p className="mt-8 max-w-[470px] text-[17px] leading-8 text-[#66756b] dark:text-[#b6c5b8]">Thoughtful lesson plans and gentle resources for the people who help faith take root.</p><div className="mt-10 flex flex-wrap items-center gap-4"><button onClick={() => openLessons()} className="flex items-center gap-3 rounded-full bg-[#315d43] px-6 py-3.5 text-sm font-bold text-white shadow-[0_9px_24px_rgba(49,93,67,.18)] transition-all hover:-translate-y-0.5 hover:bg-[#264d36]">Explore lesson plans <ArrowRight size={17} /></button><span className="text-xs font-semibold text-[#809087]">For every season of teaching</span></div></div>
-        <div className="animate-rise delay-2 relative mx-auto w-full max-w-[470px] lg:ml-auto"><div className="relative aspect-[.92] overflow-hidden rounded-[45%_45%_18%_18%] bg-[#d7ead2]"><div className="absolute inset-0 opacity-50" style={{ backgroundImage: 'radial-gradient(#6a9172 1px, transparent 1px)', backgroundSize: '17px 17px' }} /><div className="absolute left-[18%] top-[15%] font-serif text-[8rem] leading-none text-[#f7f8f2] opacity-90">“</div><div className="absolute bottom-[15%] left-[14%] right-[14%] text-center font-serif text-[30px] leading-[1.05] text-[#315d43]">The seed is<br /><em>already growing.</em></div><div className="absolute bottom-[-10px] right-[12%] h-24 w-24 rounded-full border-[1.5px] border-[#6a9172] opacity-60" /></div><div className="absolute -bottom-4 -left-4 rounded-2xl border border-[#dfe5da] bg-[#fbfcf7] px-5 py-4 shadow-lg dark:border-[#40544a] dark:bg-[#263a31]"><div className="flex items-center gap-2 text-[#315d43] dark:text-[#d7ead2]"><BookOpen size={17} /><span className="text-xs font-bold">3 rhythms of formation</span></div><p className="mt-2 text-[11px] text-[#819087]">Doctrine · Moral · Worship</p></div></div>
+    <section className="relative overflow-hidden border-b border-[#dfe5da] dark:border-[#34453d]">
+      <div className="mx-auto grid max-w-[1240px] items-center gap-10 px-5 pb-20 pt-20 sm:px-8 md:pb-28 md:pt-28 lg:grid-cols-[1.08fr_.92fr] lg:px-10">
+        <div className="animate-rise">
+          <p className="mb-7 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">Faith formation, made ready</p>
+          <h1 className="max-w-[650px] font-serif text-[clamp(3.6rem,7vw,6.4rem)] leading-[.94] tracking-[-0.055em] text-[#24332d] dark:text-[#edf2e9]">Make space for<br /><em className="font-serif text-[#6a9172]">wonder.</em></h1>
+          <p className="mt-8 max-w-[470px] text-[17px] leading-8 text-[#66756b] dark:text-[#b6c5b8]">Thoughtful lesson plans and gentle resources for the people who help faith take root.</p>
+          <div className="mt-10 flex flex-wrap items-center gap-4">
+            <button onClick={() => openLessons()} className="flex items-center gap-3 rounded-full bg-[#315d43] px-6 py-3.5 text-sm font-bold text-white shadow-[0_9px_24px_rgba(49,93,67,.18)] transition-all hover:-translate-y-0.5 hover:bg-[#264d36]">Explore lesson plans <ArrowRight size={17} /></button>
+            <span className="text-xs font-semibold text-[#809087]">For every season of teaching</span>
+          </div>
+        </div>
+
+        <div className="animate-rise delay-2 flex flex-col items-center justify-center gap-3 lg:items-end">
+          <Sprout className="h-32 w-32 text-[#7ea17f]/45 dark:text-[#b9d1b4]/35" strokeWidth={1.5} />
+          <p className="font-serif text-lg italic tracking-[-0.04em] text-[#6a9172]/75 dark:text-[#d1dec9]/60">The seed is already growing.</p>
+        </div>
       </div>
     </section>
-    <section className="mx-auto max-w-[1240px] px-5 py-20 sm:px-8 md:py-28 lg:px-10"><div><p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">Start here</p><h2 className="mt-3 font-serif text-4xl tracking-[-0.04em]">A place to begin.</h2><p className="mt-4 max-w-[500px] text-[15px] leading-7 text-[#718078] dark:text-[#b6c5b8]">A growing library for teaching the faith with clarity, warmth, and wonder.</p></div><div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3"><ResourceCard icon={BookOpen} eyebrow="For every season of teaching" title="Lesson plans" description="Ready-to-use formation plans built around Doctrine, Moral, and Worship." onClick={() => openLessons()} /><ResourceCard icon={ScrollText} eyebrow="Stories that open the heart" title="Parables" description="Explore the stories Jesus told, with meaning, themes, and ways to share them." onClick={openParables} /><ResourceCard icon={Sparkles} eyebrow="Lives of holiness" title="Saints" description="Discover saints through their virtues, feast days, and stories that can inspire teaching and prayer." onClick={openSaints} /></div></section>
+    <section className="mx-auto max-w-[1240px] px-5 py-20 sm:px-8 md:py-28 lg:px-10"><div><p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">Start here</p><h2 className="mt-3 font-serif text-4xl tracking-[-0.04em]">A place to begin.</h2><p className="mt-4 max-w-[500px] text-[15px] leading-7 text-[#718078] dark:text-[#b6c5b8]">A growing library for teaching the faith with clarity, warmth, and wonder.</p></div><div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3"><ResourceCard icon={BookOpen} eyebrow="For every season of teaching" title="Lesson plans" description="Ready-to-use formation plans built around Doctrine, Moral, and Worship." onClick={() => openLessons()} /><ResourceCard icon={Wheat} eyebrow="Stories that open the heart" title="Parables" description="Explore the stories Jesus told, with meaning, themes, and ways to share them." onClick={openParables} /><ResourceCard icon={SunMedium} eyebrow="Lives of holiness" title="Saints" description="Discover saints through their virtues, feast days, and stories that can inspire teaching and prayer." onClick={openSaints} /><ResourceCard icon={Cross} eyebrow="The Church’s living signs" title="Sacraments" description="Explore the seven sacraments, from Baptism to Matrimony, with their rites, signs, and catechetical depth." onClick={openSacraments} /></div></section>
     <section className="bg-[#eaf1e5] dark:bg-[#21372d]"><div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 sm:px-8 md:grid-cols-[.8fr_1.2fr] md:items-center md:py-20 lg:px-10"><div><span className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-[#f7f8f2] text-[#315d43] dark:bg-[#2d5140] dark:text-[#d7ead2]"><Heart size={19} /></span><h2 className="font-serif text-4xl leading-tight tracking-[-0.04em]">Good teaching starts<br />with a present heart.</h2></div><p className="max-w-[530px] text-[17px] leading-8 text-[#5e7063] dark:text-[#b6c5b8]">CatechistCorner is a growing collection of simple, beautiful resources for sharing the life of faith. Come as you are. Bring your questions.</p></div></section>
   </main>
 }
@@ -267,6 +305,124 @@ function SaintDetail({ saint, onBack }: { saint: Saint; onBack: () => void }) {
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#a25e4b]">Quote</p>
           <p className="mt-3 font-serif text-lg leading-7 text-[#596a60] dark:text-[#d4e0d4]">{saint.quote}</p>
         </section>}
+      </div>
+    </div>
+  </main>
+}
+
+function Sacraments({ selectedSacrament, openSacrament, onBack }: { selectedSacrament: Sacrament | null; openSacrament: (sacrament: Sacrament) => void; onBack: () => void }) {
+  const [filter, setFilter] = useState<'All' | SacramentCategory>('All')
+  const [search, setSearch] = useState('')
+
+  if (selectedSacrament) return <SacramentDetail sacrament={selectedSacrament} onBack={onBack} />
+
+  const normalizedSearch = search.trim().toLowerCase()
+  const filteredSacraments = sacraments.filter((sacrament) => {
+    const matchesFilter = filter === 'All' || sacrament.category === filter
+    if (!matchesFilter) return false
+    if (!normalizedSearch) return true
+
+    const haystack = [
+      sacrament.name,
+      sacrament.summary,
+      sacrament.whatItIs,
+      sacrament.form,
+      sacrament.matter,
+      sacrament.rite.join(' '),
+      sacrament.sacramentals.join(' '),
+      sacrament.notes.join(' '),
+    ].join(' ').toLowerCase()
+
+    return haystack.includes(normalizedSearch)
+  })
+
+  return <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-16 sm:px-8 md:py-24 lg:px-10">
+    <div className="animate-rise max-w-[680px]">
+      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">The sacramental life</p>
+      <h1 className="mt-4 font-serif text-5xl tracking-[-0.05em] sm:text-6xl">The seven sacraments<br /><em className="text-[#6a9172]">for living faith.</em></h1>
+      <p className="mt-6 text-[16px] leading-7 text-[#66756b] dark:text-[#b6c5b8]">Visible signs of God’s grace, given to the Church to strengthen, heal, and nourish the Christian life.</p>
+    </div>
+    <div className="mt-10">
+      <SearchBar value={search} onChange={setSearch} placeholder="Search sacraments" />
+    </div>
+    <div className="mt-8 flex flex-wrap items-center gap-2 border-b border-[#dfe5da] pb-5 dark:border-[#34453d]">
+      {sacramentCategoryFilters.map((option) => (
+        <button key={option} onClick={() => setFilter(option)} className={`rounded-full px-4 py-2 text-xs font-bold transition-colors ${filter === option ? 'bg-[#315d43] text-white' : 'text-[#718078] hover:bg-[#eaf1e5] dark:text-[#b6c5b8] dark:hover:bg-[#2d5140]'}`}>
+          {option}
+        </button>
+      ))}
+    </div>
+    <div className="mt-9 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      {filteredSacraments.map((sacrament, index) => (
+        <SacramentCard key={sacrament.id} sacrament={sacrament} index={index} onClick={() => openSacrament(sacrament)} />
+      ))}
+    </div>
+  </main>
+}
+
+function SacramentCard({ sacrament, index, onClick }: { sacrament: Sacrament; index: number; onClick: () => void }) {
+  return <button onClick={onClick} className={`animate-rise delay-${index + 1} group flex min-h-[280px] flex-col justify-between rounded-3xl border border-[#dfe5da] bg-[#fbfcf7] p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-[#9fbea0] hover:shadow-[0_18px_35px_rgba(53,84,60,.1)] dark:border-[#34453d] dark:bg-[#1d2c25] dark:hover:border-[#6a9172]`}>
+    <div>
+      <div className="flex items-center justify-between">
+        <span className="rounded-full bg-[#eaf1e5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#52725b] dark:bg-[#2d5140] dark:text-[#d7ead2]">{sacrament.category}</span>
+        <ArrowRight size={18} className="text-[#9aaca0] transition-transform group-hover:translate-x-1 group-hover:text-[#315d43]" />
+      </div>
+      <h3 className="mt-10 font-serif text-[29px] leading-[1.05] tracking-[-0.035em]">{sacrament.name}</h3>
+      <p className="mt-3 text-sm leading-6 text-[#718078] dark:text-[#b6c5b8]">{sacrament.summary}</p>
+    </div>
+    <div className="flex items-center gap-2 border-t border-[#e5ebe1] pt-4 text-[11px] font-semibold text-[#809087] dark:border-[#34453d]">
+      <BookOpen size={14} /> {sacrament.form.slice(0, 40)}...
+    </div>
+  </button>
+}
+
+function SacramentDetail({ sacrament, onBack }: { sacrament: Sacrament; onBack: () => void }) {
+  const imageFile = sacrament.image ?? 'sacrament_default_image.svg'
+  const imageUrl = sacramentImageUrls[`../frontend/images/sacraments/${imageFile}`] ?? sacramentImageUrls['../frontend/images/sacraments/sacrament_default_image.svg']
+
+  return <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-12 sm:px-8 md:py-20 lg:px-10">
+    <button onClick={onBack} className="mb-14 flex items-center gap-2 text-sm font-bold text-[#6a9172] transition-colors hover:text-[#315d43]">
+      <ArrowLeft size={17} /> All sacraments
+    </button>
+    <div className="grid gap-14 lg:grid-cols-[.72fr_1.28fr]">
+      <div className="animate-rise lg:sticky lg:top-10 lg:self-start">
+        {imageUrl && <img src={imageUrl} alt={sacrament.name} className="mb-8 block w-full rounded-2xl border border-[#dfe5da] bg-[#eef3ea] object-cover dark:border-[#34453d] dark:bg-[#263a31]" />}
+        <span className="rounded-full bg-[#eaf1e5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#52725b] dark:bg-[#2d5140] dark:text-[#d7ead2]">{sacrament.category}</span>
+        <h1 className="mt-6 font-serif text-5xl leading-[.98] tracking-[-0.05em] sm:text-6xl">{sacrament.name}</h1>
+        <p className="mt-7 max-w-[420px] text-[16px] leading-7 text-[#66756b] dark:text-[#b6c5b8]">{sacrament.summary}</p>
+        <div className="mt-8 space-y-3 text-[15px] leading-7 text-[#596a60] dark:text-[#c2d0c3]">
+          <div><strong>Form:</strong> {sacrament.form}</div>
+          <div><strong>Matter:</strong> {sacrament.matter}</div>
+        </div>
+      </div>
+      <div className="animate-rise delay-1 space-y-5">
+        <section className="rounded-3xl border border-[#dfe5da] bg-[#fbfcf7] p-6 sm:p-8 dark:border-[#34453d] dark:bg-[#1d2c25]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6a9172]">What it is</p>
+          <p className="mt-4 max-w-[650px] text-[15px] leading-7 text-[#596a60] dark:text-[#c2d0c3]">{sacrament.whatItIs}</p>
+        </section>
+
+        <section className="rounded-3xl border border-[#dfe5da] bg-[#fbfcf7] p-6 sm:p-8 dark:border-[#34453d] dark:bg-[#1d2c25]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6a9172]">The rite</p>
+          <ol className="mt-4 list-decimal space-y-3 pl-5 text-[15px] leading-7 text-[#596a60] dark:text-[#c2d0c3]">
+            {sacrament.rite.map((step, index) => <li key={index}>{step}</li>)}
+          </ol>
+        </section>
+
+        <section className="rounded-3xl border border-[#dfe5da] bg-[#fbfcf7] p-6 sm:p-8 dark:border-[#34453d] dark:bg-[#1d2c25]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6a9172]">Sacramentals</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {sacrament.sacramentals.map((item) => (
+              <span key={item} className="rounded-full border border-[#dfe5da] px-3 py-1.5 text-[11px] font-semibold text-[#718078] dark:border-[#40544a] dark:text-[#b6c5b8]">{item}</span>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-[#dfe5da] bg-[#f4f6ee] p-6 sm:p-8 dark:border-[#34453d] dark:bg-[#263a31]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#a25e4b]">Notes for catechesis</p>
+          <ul className="mt-4 list-disc space-y-2 pl-5 text-[15px] leading-7 text-[#596a60] dark:text-[#d4e0d4]">
+            {sacrament.notes.map((note, index) => <li key={index}>{note}</li>)}
+          </ul>
+        </section>
       </div>
     </div>
   </main>
