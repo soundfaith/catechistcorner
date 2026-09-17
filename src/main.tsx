@@ -1,11 +1,10 @@
-﻿import { StrictMode, useEffect, useState, type FormEvent } from 'react'
+﻿import { StrictMode, useEffect, useRef, useState, type FormEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
   Check,
-  ChevronDown,
   Clock3,
   Cross,
   Download,
@@ -33,6 +32,7 @@ import './index.css'
 const parableImageUrls = import.meta.glob('../frontend/images/parables/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 const saintImageUrls = import.meta.glob('../frontend/images/saints/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 const sacramentImageUrls = import.meta.glob('../frontend/images/sacraments/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+const lessonImageUrls = import.meta.glob('../frontend/images/lessons/*/*.{jpg,jpeg,png}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 const lessonDownloadUrls = import.meta.glob('../frontend/downloads/lessons/*/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 const allDownloadUrls = import.meta.glob('../frontend/downloads/**/*.{pdf,ppt,pptx}', {
   eager: true,
@@ -76,18 +76,57 @@ const lessonDownloadMap = Object.entries(lessonDownloadUrls).reduce<LessonDownlo
   return accumulator
 }, {})
 
+const lessonImageMap = Object.entries(lessonImageUrls).reduce<Record<string, string>>((accumulator, [filePath, url]) => {
+  const match = filePath.match(/\/([^/]+)\.(?:jpg|jpeg|png)$/i)
+  if (match) accumulator[match[1]] = url
+  return accumulator
+}, {})
+
 const faqEntries = [
   { question: 'What is CatechistCorner?', answer: 'CatechistCorner is a growing resource library for catechists, teachers, and parish leaders who want clear, prayerful, and practical faith formation materials.' },
-  { question: 'Are the lesson plans ready to teach?', answer: 'Yes. Each lesson plan is designed to be usable in class and includes scripture, doctrine, moral application, and worship reflections. You can also download PDFs and presentations when available.' },
-  { question: 'Can I use these resources for different age groups?', answer: 'Yes. The library includes resources for Grade 3, Grade 7, and adults, and the filters make it easy to find what fits your group.' },
-  { question: 'Do you offer materials beyond lesson plans?', answer: 'Yes. The library also includes parables, saints, and sacraments to help deepen teaching, prayer, and reflection.' },
-  { question: 'Can I request a translated or adapted version of a lesson?', answer: 'Absolutely. We welcome requests for translated or adapted materials, such as Filipino versions of lesson plans or PowerPoint presentations.' },
-  { question: 'How do I share feedback or a suggestion?', answer: 'Use the feedback form on the home page or email thecatechistcorner@gmail.com. We welcome corrections, ideas, and requests for new resources.' },
-  { question: 'Are the materials free to access?', answer: 'The resources are intended to be freely accessible and useful for catechetical ministry, especially when they support teaching and formation.' },
-  { question: 'Can I suggest a saint, parable, or sacrament to add?', answer: 'Yes. If you would like a topic added or expanded, send a request through the feedback form and we will consider it for the next update.' },
-  { question: 'Is the site suitable for parish or classroom use?', answer: 'Yes. The materials are designed to be practical and easy to use in parish catechesis, classrooms, small groups, and family faith formation.' },
-  { question: 'Do you plan to add more languages and formats?', answer: 'Yes. We are growing the library, and translations, alternate formats, and additional classroom-ready downloads are part of future development.' },
+  { question: 'Are the resources ready to teach?', answer: 'Yes. Lesson plans include scripture, doctrine, moral application, and worship reflections, with resources for Grade 3, Grade 7, and adults. Downloads are available when provided.' },
+  { question: 'What else can I find here?', answer: 'Alongside lesson plans, the library includes parables, saints, and sacraments for teaching, prayer, and reflection. Resources are freely accessible for parish, classroom, and family use.' },
+  { question: 'Can I request an adaptation or new topic?', answer: 'Yes. We welcome requests for translations, alternate formats, and new or expanded topics as the library grows.' },
+  { question: 'How can I get in touch?', answer: 'Send feedback through the form or email thecatechistcorner@gmail.com. We welcome corrections, ideas, and resource requests.' },
 ]
+
+function useSwipeNavigation(currentIndex: number, itemCount: number, onPrevious: () => void, onNext: () => void) {
+  const touchStart = useRef<{ x: number; y: number } | null>(null)
+
+  useEffect(() => {
+    const handleTouchStart = (event: TouchEvent) => {
+      const touch = event.changedTouches[0]
+      touchStart.current = { x: touch.clientX, y: touch.clientY }
+    }
+    const handleTouchEnd = (event: TouchEvent) => {
+      if (!touchStart.current) return
+      const touch = event.changedTouches[0]
+      const deltaX = touch.clientX - touchStart.current.x
+      const deltaY = touch.clientY - touchStart.current.y
+      touchStart.current = null
+      if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY) * 1.25) return
+      if (deltaX < 0 && currentIndex < itemCount - 1) onNext()
+      if (deltaX > 0 && currentIndex > 0) onPrevious()
+    }
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true })
+    window.addEventListener('touchend', handleTouchEnd, { passive: true })
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [currentIndex, itemCount, onPrevious, onNext])
+}
+
+function DetailPager({ currentIndex, itemCount, previousLabel, nextLabel, onPrevious, onNext }: { currentIndex: number; itemCount: number; previousLabel: string; nextLabel: string; onPrevious: () => void; onNext: () => void }) {
+  return (
+    <div className="mt-12 flex items-center justify-between gap-4 border-t border-[#dfe5da] pt-6 dark:border-[#34453d]">
+      <button onClick={onPrevious} disabled={currentIndex === 0} className="flex min-w-0 items-center gap-2 text-left text-sm font-bold text-[#6a9172] transition-colors hover:text-[#315d43] disabled:pointer-events-none disabled:opacity-35"><ArrowLeft size={17} /><span className="truncate">{previousLabel}</span></button>
+      <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.14em] text-[#9aaca0]">{currentIndex + 1} / {itemCount}</span>
+      <button onClick={onNext} disabled={currentIndex === itemCount - 1} className="flex min-w-0 items-center gap-2 text-right text-sm font-bold text-[#6a9172] transition-colors hover:text-[#315d43] disabled:pointer-events-none disabled:opacity-35"><span className="truncate">{nextLabel}</span><ArrowRight size={17} /></button>
+    </div>
+  )
+}
 
 function App() {
   const [view, setView] = useState<View>('home')
@@ -362,21 +401,14 @@ function ResourceCard({ icon: Icon, eyebrow, title, description, onClick }: { ic
   )
 }
 
-function FAQAccordion({ items, compact = false }: { items: typeof faqEntries; compact?: boolean }) {
+function FAQList({ items }: { items: typeof faqEntries }) {
   return (
-    <div className={compact ? 'space-y-0' : 'space-y-3'}>
+    <div className="divide-y divide-[#dfe5da] dark:divide-[#34453d]">
       {items.map((item) => (
-        <details key={item.question} className={compact
-          ? 'group border-t border-[#dfe5da] py-4 text-left dark:border-[#34453d]'
-          : 'group rounded-2xl border border-[#dfe5da] bg-[#fbfcf7] px-5 py-4 text-left transition-colors hover:border-[#9fbea0] dark:border-[#34453d] dark:bg-[#1d2c25]'}>
-          <summary className={compact
-            ? 'flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-[#24332d] dark:text-[#edf2e9]'
-            : 'flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-[#24332d] dark:text-[#edf2e9]'}>
-            <span>{item.question}</span>
-            <ChevronDown size={18} className="shrink-0 text-[#6a9172] transition-transform group-open:rotate-180" />
-          </summary>
-          <p className={compact ? 'mt-3 pr-6 text-[15px] leading-7 text-[#596a60] dark:text-[#c2d0c3]' : 'mt-4 pr-6 text-[15px] leading-7 text-[#596a60] dark:text-[#c2d0c3]'}>{item.answer}</p>
-        </details>
+        <div key={item.question} className="grid gap-2 py-5 text-left sm:grid-cols-[minmax(180px,.7fr)_1.3fr] sm:gap-8">
+          <h3 className="text-base font-semibold text-[#24332d] dark:text-[#edf2e9]">{item.question}</h3>
+          <p className="text-[15px] leading-7 text-[#596a60] dark:text-[#c2d0c3]">{item.answer}</p>
+        </div>
       ))}
     </div>
   )
@@ -438,7 +470,7 @@ function FeedbackForm({ onClose }: { onClose?: () => void }) {
 
       <div className="block text-sm font-medium text-[#496052] md:col-span-2 dark:text-[#d7ead2]">
         <span className="mb-3 block">Type</span>
-        <div className="flex flex-wrap gap-3 rounded-2xl border border-[#dfe5da] bg-white p-3 dark:border-[#34453d] dark:bg-[#21372d]">
+        <div className="flex flex-wrap gap-3">
           {['Feedback', 'Suggestion', 'Request'].map((option) => (
             <label key={option} className="flex items-center gap-2 rounded-full border border-[#dfe5da] bg-[#f7f8f2] px-3 py-2 text-sm text-[#24332d] dark:border-[#40544a] dark:bg-[#1c2b27] dark:text-[#edf2e9]">
               <input type="radio" name="type" value={option} defaultChecked={option === 'Suggestion'} className="h-4 w-4 accent-[#315d43]" />
@@ -487,14 +519,28 @@ function SearchBar({ value, onChange, placeholder }: { value: string; onChange: 
 function Lessons({ filter, setFilter, selectedLesson, openLesson, onBack, onHome }: { filter: 'All' | Audience; setFilter: (value: 'All' | Audience) => void; selectedLesson: LessonPlan | null; openLesson: (lesson: LessonPlan) => void; onBack: () => void; onHome: () => void }) {
   const [search, setSearch] = useState('')
 
-  if (selectedLesson) return <LessonDetail lesson={selectedLesson} onBack={onBack} onHome={onHome} />
-
   const normalizedSearch = search.trim().toLowerCase()
   const filteredPlans = (filter === 'All' ? lessonPlans : lessonPlans.filter((lesson) => lesson.audience === filter)).filter((lesson) => {
     if (!normalizedSearch) return true
-    const haystack = [lesson.title, lesson.scripture, lesson.summary, lesson.doctrine.body, lesson.moral.body, lesson.worship.body].join(' ').toLowerCase()
+    const haystack = [
+      lesson.title,
+      lesson.scripture,
+      lesson.summary,
+      lesson.doctrine.body,
+      lesson.moral.body,
+      lesson.worship.body,
+      ...lesson.catechist.talkingPoints,
+      ...lesson.catechist.tips,
+    ].join(' ').toLowerCase()
     return haystack.includes(normalizedSearch)
   })
+
+  if (selectedLesson) {
+    const selectedIndex = filteredPlans.findIndex((lesson) => lesson.id === selectedLesson.id)
+    const previousLesson = selectedIndex > 0 ? filteredPlans[selectedIndex - 1] : undefined
+    const nextLesson = selectedIndex >= 0 && selectedIndex < filteredPlans.length - 1 ? filteredPlans[selectedIndex + 1] : undefined
+    return <LessonDetail lesson={selectedLesson} onBack={onBack} onHome={onHome} currentIndex={selectedIndex} itemCount={filteredPlans.length} previousLesson={previousLesson} nextLesson={nextLesson} onSelectLesson={openLesson} />
+  }
 
   return (
     <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-16 sm:px-8 md:py-24 lg:px-10">
@@ -504,7 +550,6 @@ function Lessons({ filter, setFilter, selectedLesson, openLesson, onBack, onHome
       </div>
 
       <div className="animate-rise max-w-[680px] mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">The library</p>
         <h1 className="mt-4 font-serif text-5xl tracking-[-0.05em] sm:text-6xl">Lesson plans for<br /><em className="text-[#6a9172]">growing faith.</em></h1>
         <p className="mt-6 text-[16px] leading-7 text-[#66756b] dark:text-[#b6c5b8]">A simple rhythm for meaningful formation: meet the truth, live the truth, celebrate the truth.</p>
       </div>
@@ -547,7 +592,7 @@ function LessonCard({ lesson, index, onClick }: { lesson: LessonPlan; index: num
   )
 }
 
-function LessonDetail({ lesson, onBack, onHome }: { lesson: LessonPlan; onBack: () => void; onHome: () => void }) {
+function LessonDetail({ lesson, onBack, onHome, currentIndex, itemCount, previousLesson, nextLesson, onSelectLesson }: { lesson: LessonPlan; onBack: () => void; onHome: () => void; currentIndex: number; itemCount: number; previousLesson?: LessonPlan; nextLesson?: LessonPlan; onSelectLesson: (lesson: LessonPlan) => void }) {
   const sections = [
     { icon: BookOpen, name: 'Doctrine', data: lesson.doctrine, color: 'bg-[#eaf1e5] text-[#315d43] dark:bg-[#2d5140] dark:text-[#d7ead2]' },
     { icon: Lightbulb, name: 'Moral', data: lesson.moral, color: 'bg-[#f5edda] text-[#8b6b30] dark:bg-[#514528] dark:text-[#e6cd8e]' },
@@ -555,6 +600,8 @@ function LessonDetail({ lesson, onBack, onHome }: { lesson: LessonPlan; onBack: 
   ]
   const lessonFolder = audienceDownloadFolders[lesson.audience]
   const availableDownloads = lessonFolder ? lessonDownloadMap[lessonFolder]?.[lesson.id] ?? {} : {}
+  const lessonImage = lessonImageMap[lesson.id]
+  useSwipeNavigation(currentIndex, itemCount, () => previousLesson && onSelectLesson(previousLesson), () => nextLesson && onSelectLesson(nextLesson))
 
   return (
     <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-12 sm:px-8 md:py-20 lg:px-10">
@@ -565,7 +612,8 @@ function LessonDetail({ lesson, onBack, onHome }: { lesson: LessonPlan; onBack: 
 
       <div className="grid gap-14 lg:grid-cols-[.7fr_1.3fr]">
         <div className="animate-rise lg:sticky lg:top-10 lg:self-start">
-          <span className="rounded-full bg-[#eaf1e5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#52725b] dark:bg-[#2d5140] dark:text-[#d7ead2]">{lesson.audience}</span>
+          {lessonImage && <img src={lessonImage} alt="" className="aspect-video w-full max-w-[430px] rounded-2xl border border-[#dfe5da] object-cover shadow-sm dark:border-[#34453d]" />}
+          <span className="mt-6 inline-block rounded-full bg-[#eaf1e5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#52725b] dark:bg-[#2d5140] dark:text-[#d7ead2]">{lesson.audience}</span>
           <h1 className="mt-6 font-serif text-5xl leading-[.98] tracking-[-0.05em] sm:text-6xl">{lesson.title}</h1>
           <p className="mt-7 max-w-[370px] text-[16px] leading-7 text-[#66756b] dark:text-[#b6c5b8]">{lesson.summary}</p>
 
@@ -612,6 +660,33 @@ function LessonDetail({ lesson, onBack, onHome }: { lesson: LessonPlan; onBack: 
               </section>
             )
           })}
+
+          <section className="rounded-3xl border border-[#dfe5da] bg-[#eef4e9] p-6 sm:p-8 dark:border-[#34453d] dark:bg-[#263a31]">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#d7ead2] text-[#315d43] dark:bg-[#3b624b] dark:text-[#e1f0db]"><Sparkles size={17} /></span>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6a9172]">Catechist guidance</p>
+                <h2 className="mt-1 font-serif text-2xl tracking-[-0.03em]">Lead the conversation</h2>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-8 sm:grid-cols-2">
+              <div>
+                <h3 className="text-sm font-bold text-[#315d43] dark:text-[#d7ead2]">Talking points</h3>
+                <ul className="mt-3 space-y-3 text-[14px] leading-6 text-[#596a60] dark:text-[#c2d0c3]">
+                  {lesson.catechist.talkingPoints.map((point) => <li key={point} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#6a9172]" />{point}</li>)}
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#315d43] dark:text-[#d7ead2]">Teaching tips</h3>
+                <ul className="mt-3 space-y-3 text-[14px] leading-6 text-[#596a60] dark:text-[#c2d0c3]">
+                  {lesson.catechist.tips.map((tip) => <li key={tip} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#c28c45]" />{tip}</li>)}
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <DetailPager currentIndex={currentIndex} itemCount={itemCount} previousLabel={previousLesson?.title ?? ''} nextLabel={nextLesson?.title ?? ''} onPrevious={() => previousLesson && onSelectLesson(previousLesson)} onNext={() => nextLesson && onSelectLesson(nextLesson)} />
         </div>
       </div>
     </main>
@@ -621,8 +696,6 @@ function LessonDetail({ lesson, onBack, onHome }: { lesson: LessonPlan; onBack: 
 function Parables({ selectedParable, openParable, onBack, onHome }: { selectedParable: Parable | null; openParable: (parable: Parable) => void; onBack: () => void; onHome: () => void }) {
   const [filter, setFilter] = useState<'all' | ParableAudience>('all')
   const [search, setSearch] = useState('')
-
-  if (selectedParable) return <ParableDetail parable={selectedParable} onBack={onBack} onHome={onHome} />
 
   const normalizedSearch = search.trim().toLowerCase()
   const filteredParables = parables.filter((parable) => {
@@ -643,14 +716,19 @@ function Parables({ selectedParable, openParable, onBack, onHome }: { selectedPa
     return haystack.includes(normalizedSearch)
   })
 
+  if (selectedParable) {
+    const selectedIndex = filteredParables.findIndex((parable) => parable.title === selectedParable.title)
+    return <ParableDetail parable={selectedParable} onBack={onBack} onHome={onHome} currentIndex={selectedIndex} items={filteredParables} onSelect={openParable} />
+  }
+
   return (
     <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-16 sm:px-8 md:py-24 lg:px-10">
-      <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">The story library</p>
         <button onClick={onHome} className="flex items-center gap-2 text-sm font-bold text-[#6a9172] transition-colors hover:text-[#315d43]"><ArrowLeft size={17} /> Back to home</button>
       </div>
 
       <div className="animate-rise max-w-[680px] mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">The story library</p>
         <h1 className="mt-4 font-serif text-5xl tracking-[-0.05em] sm:text-6xl">Parables for<br /><em className="text-[#6a9172]">open hearts.</em></h1>
         <p className="mt-6 text-[16px] leading-7 text-[#66756b] dark:text-[#b6c5b8]">Stories Jesus told to help us see the kingdom of God in the ordinary moments of life.</p>
       </div>
@@ -692,8 +770,11 @@ function ParableCard({ parable, index, onClick }: { parable: Parable; index: num
   )
 }
 
-function ParableDetail({ parable, onBack, onHome }: { parable: Parable; onBack: () => void; onHome: () => void }) {
+function ParableDetail({ parable, onBack, onHome, currentIndex, items, onSelect }: { parable: Parable; onBack: () => void; onHome: () => void; currentIndex: number; items: Parable[]; onSelect: (parable: Parable) => void }) {
   const imageUrl = parable.image ? parableImageUrls[`../frontend/images/parables/${parable.image}`] : undefined
+  const previous = currentIndex > 0 ? items[currentIndex - 1] : undefined
+  const next = currentIndex >= 0 && currentIndex < items.length - 1 ? items[currentIndex + 1] : undefined
+  useSwipeNavigation(currentIndex, items.length, () => { if (previous) onSelect(previous) }, () => { if (next) onSelect(next) })
 
   return (
     <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-12 sm:px-8 md:py-20 lg:px-10">
@@ -735,6 +816,7 @@ function ParableDetail({ parable, onBack, onHome }: { parable: Parable; onBack: 
               <p className="mt-3 font-serif text-lg leading-7 text-[#596a60] dark:text-[#d4e0d4]">{parable.prayer}</p>
             </section>
           )}
+          <DetailPager currentIndex={currentIndex} itemCount={items.length} previousLabel={previous?.title ?? ''} nextLabel={next?.title ?? ''} onPrevious={() => { if (previous) onSelect(previous) }} onNext={() => { if (next) onSelect(next) }} />
         </div>
       </div>
     </main>
@@ -744,8 +826,6 @@ function ParableDetail({ parable, onBack, onHome }: { parable: Parable; onBack: 
 function Saints({ selectedSaint, openSaint, onBack, onHome }: { selectedSaint: Saint | null; openSaint: (saint: Saint) => void; onBack: () => void; onHome: () => void }) {
   const [filter, setFilter] = useState<'All' | SaintCategory>('All')
   const [search, setSearch] = useState('')
-
-  if (selectedSaint) return <SaintDetail saint={selectedSaint} onBack={onBack} onHome={onHome} />
 
   const normalizedSearch = search.trim().toLowerCase()
   const matchesSaint = (saint: Saint) => {
@@ -767,6 +847,11 @@ function Saints({ selectedSaint, openSaint, onBack, onHome }: { selectedSaint: S
 
   const filteredSaints = saints.filter((saint) => (filter === 'All' ? matchesSaint(saint) : saint.category === filter && matchesSaint(saint)))
 
+  if (selectedSaint) {
+    const selectedIndex = filteredSaints.findIndex((saint) => saint.id === selectedSaint.id)
+    return <SaintDetail saint={selectedSaint} onBack={onBack} onHome={onHome} currentIndex={selectedIndex} items={filteredSaints} onSelect={openSaint} />
+  }
+
   const filteredGroups = (filter === 'All'
     ? saintCategories.map((category) => ({ category, saints: filteredSaints.filter((saint) => saint.category === category) }))
     : [{ category: filter, saints: filteredSaints }])
@@ -774,12 +859,12 @@ function Saints({ selectedSaint, openSaint, onBack, onHome }: { selectedSaint: S
 
   return (
     <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-16 sm:px-8 md:py-24 lg:px-10">
-      <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">The witness library</p>
         <button onClick={onHome} className="flex items-center gap-2 text-sm font-bold text-[#6a9172] transition-colors hover:text-[#315d43]"><ArrowLeft size={17} /> Back to home</button>
       </div>
 
       <div className="animate-rise max-w-[680px] mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">The witness library</p>
         <h1 className="mt-4 font-serif text-5xl tracking-[-0.05em] sm:text-6xl">Saints for<br /><em className="text-[#6a9172]">holy inspiration.</em></h1>
         <p className="mt-6 text-[16px] leading-7 text-[#66756b] dark:text-[#b6c5b8]">Witnesses of grace whose lives illuminate the path of faith, charity, and courage.</p>
       </div>
@@ -832,9 +917,12 @@ function SaintCard({ saint, index, onClick }: { saint: Saint; index: number; onC
   )
 }
 
-function SaintDetail({ saint, onBack, onHome }: { saint: Saint; onBack: () => void; onHome: () => void }) {
+function SaintDetail({ saint, onBack, onHome, currentIndex, items, onSelect }: { saint: Saint; onBack: () => void; onHome: () => void; currentIndex: number; items: Saint[]; onSelect: (saint: Saint) => void }) {
   const imageFile = saint.image ?? `${saint.id}.png`
   const imageUrl = saintImageUrls[`../frontend/images/saints/${imageFile}`] ?? saintImageUrls['../frontend/images/saints/saint_default_image.png']
+  const previous = currentIndex > 0 ? items[currentIndex - 1] : undefined
+  const next = currentIndex >= 0 && currentIndex < items.length - 1 ? items[currentIndex + 1] : undefined
+  useSwipeNavigation(currentIndex, items.length, () => { if (previous) onSelect(previous) }, () => { if (next) onSelect(next) })
 
   return (
     <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-12 sm:px-8 md:py-20 lg:px-10">
@@ -878,6 +966,7 @@ function SaintDetail({ saint, onBack, onHome }: { saint: Saint; onBack: () => vo
               <p className="mt-3 font-serif text-lg leading-7 text-[#596a60] dark:text-[#d4e0d4]">“{saint.quote}”</p>
             </section>
           )}
+          <DetailPager currentIndex={currentIndex} itemCount={items.length} previousLabel={previous?.name ?? ''} nextLabel={next?.name ?? ''} onPrevious={() => { if (previous) onSelect(previous) }} onNext={() => { if (next) onSelect(next) }} />
         </div>
       </div>
     </main>
@@ -887,8 +976,6 @@ function SaintDetail({ saint, onBack, onHome }: { saint: Saint; onBack: () => vo
 function Sacraments({ selectedSacrament, openSacrament, onBack, onHome }: { selectedSacrament: Sacrament | null; openSacrament: (sacrament: Sacrament) => void; onBack: () => void; onHome: () => void }) {
   const [filter, setFilter] = useState<'All' | SacramentCategory>('All')
   const [search, setSearch] = useState('')
-
-  if (selectedSacrament) return <SacramentDetail sacrament={selectedSacrament} onBack={onBack} onHome={onHome} />
 
   const normalizedSearch = search.trim().toLowerCase()
   const filteredSacraments = sacraments.filter((sacrament) => {
@@ -911,14 +998,19 @@ function Sacraments({ selectedSacrament, openSacrament, onBack, onHome }: { sele
     return haystack.includes(normalizedSearch)
   })
 
+  if (selectedSacrament) {
+    const selectedIndex = filteredSacraments.findIndex((sacrament) => sacrament.id === selectedSacrament.id)
+    return <SacramentDetail sacrament={selectedSacrament} onBack={onBack} onHome={onHome} currentIndex={selectedIndex} items={filteredSacraments} onSelect={openSacrament} />
+  }
+
   return (
     <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-16 sm:px-8 md:py-24 lg:px-10">
-      <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">The sacramental life</p>
         <button onClick={onHome} className="flex items-center gap-2 text-sm font-bold text-[#6a9172] transition-colors hover:text-[#315d43]"><ArrowLeft size={17} /> Back to home</button>
       </div>
 
       <div className="animate-rise max-w-[680px] mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">The sacramental life</p>
         <h1 className="mt-4 font-serif text-5xl tracking-[-0.05em] sm:text-6xl">The seven sacraments<br /><em className="text-[#6a9172]">for living faith.</em></h1>
         <p className="mt-6 text-[16px] leading-7 text-[#66756b] dark:text-[#b6c5b8]">Signs and mysteries given by Christ to strengthen the life of faith, charity, and worship.</p>
       </div>
@@ -960,9 +1052,12 @@ function SacramentCard({ sacrament, index, onClick }: { sacrament: Sacrament; in
   )
 }
 
-function SacramentDetail({ sacrament, onBack, onHome }: { sacrament: Sacrament; onBack: () => void; onHome: () => void }) {
+function SacramentDetail({ sacrament, onBack, onHome, currentIndex, items, onSelect }: { sacrament: Sacrament; onBack: () => void; onHome: () => void; currentIndex: number; items: Sacrament[]; onSelect: (sacrament: Sacrament) => void }) {
   const imageFile = sacrament.image ?? 'sacrament_default_image.svg'
   const imageUrl = sacramentImageUrls[`../frontend/images/sacraments/${imageFile}`] ?? sacramentImageUrls['../frontend/images/sacraments/sacrament_default_image.svg']
+  const previous = currentIndex > 0 ? items[currentIndex - 1] : undefined
+  const next = currentIndex >= 0 && currentIndex < items.length - 1 ? items[currentIndex + 1] : undefined
+  useSwipeNavigation(currentIndex, items.length, () => { if (previous) onSelect(previous) }, () => { if (next) onSelect(next) })
 
   return (
     <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-12 sm:px-8 md:py-20 lg:px-10">
@@ -1003,6 +1098,7 @@ function SacramentDetail({ sacrament, onBack, onHome }: { sacrament: Sacrament; 
               {sacrament.sacramentals.map((item) => <span key={item} className="rounded-full border border-[#dfe5da] px-3 py-1.5 text-[11px] font-semibold text-[#718078] dark:border-[#40544a] dark:text-[#b6c5b8]">{item}</span>)}
             </div>
           </section>
+          <DetailPager currentIndex={currentIndex} itemCount={items.length} previousLabel={previous?.name ?? ''} nextLabel={next?.name ?? ''} onPrevious={() => { if (previous) onSelect(previous) }} onNext={() => { if (next) onSelect(next) }} />
         </div>
       </div>
     </main>
@@ -1041,9 +1137,9 @@ function About() {
       <section id="faq" className="mt-16 pt-6">
         <div className="mb-5 flex items-center gap-3">
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6a9172]">FAQ</p>
-          <span className="h-px flex-1 bg-[#dfe5da] dark:bg-[#34453d]" />
         </div>
-        <div className="mt-6"><FAQAccordion items={faqEntries} compact /></div>
+        <FAQList items={faqEntries} />
+        <p className="mt-6 text-sm text-[#718078] dark:text-[#b6c5b8]">Questions, ideas, or corrections? Reach us at <a href="mailto:thecatechistcorner@gmail.com" className="font-semibold text-[#315d43] underline decoration-[#9fbea0] underline-offset-4 dark:text-[#d7ead2]">thecatechistcorner@gmail.com</a>.</p>
       </section>
     </main>
   )
@@ -1052,46 +1148,75 @@ function About() {
 function DownloadsPage({ onHome }: { onHome: () => void }) {
   const [search, setSearch] = useState('')
 
-  const groupedDownloads = Object.entries(allDownloadUrls).reduce<Record<string, Record<string, { title: string; pdf?: string; pptx?: string }>>>((accumulator, [filePath, url]) => {
+  type DownloadItem = { title: string; pdf?: string; pptx?: string }
+  type DownloadGroup = { categoryName: string; groupName?: string; items: DownloadItem[] }
+
+  const groupedDownloads = Object.entries(allDownloadUrls).reduce<Record<string, DownloadItem>>((accumulator, [filePath, url]) => {
     const match = filePath.match(/\.(pdf|ppt|pptx)$/i)
     if (!match) return accumulator
 
     const normalizedPath = filePath.replace(/^\.\.\/frontend\/downloads\//, '').replace(/\\/g, '/')
     const segments = normalizedPath.split('/').filter(Boolean)
-    const categoryKey = segments[0]?.toLowerCase() ?? 'downloads'
-    const categoryName = {
-      lessons: 'Lessons',
-      parables: 'Parables',
-      saints: 'Saints',
-      sacraments: 'Sacraments',
-    }[categoryKey] ?? 'Downloads'
 
     const titleSlug = segments[segments.length - 1].replace(/\.(pdf|ppt|pptx)$/i, '')
     const title = titleSlug.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
-    const itemKey = title.toLowerCase()
-    const currentItem = accumulator[categoryName]?.[itemKey] ?? { title, pdf: undefined, pptx: undefined }
+    const itemKey = normalizedPath.slice(0, normalizedPath.lastIndexOf('.')).toLowerCase()
+    const currentItem = accumulator[itemKey] ?? { title, pdf: undefined, pptx: undefined }
 
     if (match[1].toLowerCase() === 'pdf') currentItem.pdf = url
     if (match[1].toLowerCase() === 'ppt' || match[1].toLowerCase() === 'pptx') currentItem.pptx = url
 
-    const nextGroup = accumulator[categoryName] ?? {}
-    nextGroup[itemKey] = currentItem
-    accumulator[categoryName] = nextGroup
+    accumulator[itemKey] = currentItem
     return accumulator
   }, {})
 
+  const categoryLabels: Record<string, string> = {
+    lessons: 'Lessons',
+    parables: 'Parables',
+    saints: 'Saints',
+    sacraments: 'Sacraments',
+  }
+  const lessonGroupLabels: Record<string, string> = {
+    grade3: 'Grade 3',
+    grade7: 'Grade 7',
+    adult: 'Adults',
+  }
   const categoryOrder = ['Lessons', 'Parables', 'Saints', 'Sacraments']
+  const lessonGroupOrder = ['Grade 3', 'Grade 7', 'Adults']
+  const allGroups: DownloadGroup[] = categoryOrder.flatMap((categoryName) => {
+    if (categoryName !== 'Lessons') return [{ categoryName, items: [] }]
+
+    return lessonGroupOrder.map((groupName) => ({ categoryName, groupName, items: [] }))
+  })
+
+  Object.entries(groupedDownloads).forEach(([filePath, item]) => {
+    const segments = filePath.split('/').filter(Boolean)
+    const categoryName = categoryLabels[segments[0]?.toLowerCase() ?? ''] ?? 'Downloads'
+    const groupName = categoryName === 'Lessons' ? lessonGroupLabels[segments[1]?.toLowerCase() ?? ''] : undefined
+    const group = allGroups.find((candidate) => candidate.categoryName === categoryName && candidate.groupName === groupName)
+      ?? allGroups.find((candidate) => candidate.categoryName === categoryName)
+    if (group) group.items.push(item)
+  })
+
   const visibleGroups = categoryOrder
-    .map((categoryName) => {
-      const items = Object.values(groupedDownloads[categoryName] ?? {}).sort((a, b) => a.title.localeCompare(b.title))
-      const filteredItems = items.filter((item) => {
+    .flatMap((categoryName) => allGroups.filter((group) => group.categoryName === categoryName))
+    .map((group) => {
+      const filteredItems = group.items.filter((item) => {
         const value = search.trim().toLowerCase()
         if (!value) return true
-        return `${item.title} ${categoryName}`.toLowerCase().includes(value)
+        return `${item.title} ${group.categoryName} ${group.groupName ?? ''}`.toLowerCase().includes(value)
       })
-      return { categoryName, items: filteredItems }
+      return { ...group, items: filteredItems.sort((a, b) => a.title.localeCompare(b.title)) }
     })
-    .filter((group) => group.items.length > 0)
+
+  const downloadAll = (items: DownloadItem[]) => {
+    items.flatMap((item) => [item.pdf, item.pptx]).filter((url): url is string => Boolean(url)).forEach((url) => {
+      const link = document.createElement('a')
+      link.href = url
+      link.download = ''
+      link.click()
+    })
+  }
 
   return (
     <main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1240px] px-5 py-16 sm:px-8 md:py-24 lg:px-10">
@@ -1114,17 +1239,19 @@ function DownloadsPage({ onHome }: { onHome: () => void }) {
           <div className="rounded-3xl border border-dashed border-[#dfe5da] bg-[#fbfcf7] p-8 text-center text-[#596a60] dark:border-[#34453d] dark:bg-[#1d2c25] dark:text-[#c2d0c3]">No downloadable files match your search yet.</div>
         ) : (
           visibleGroups.map((group) => (
-            <div key={group.categoryName}>
+            <div key={`${group.categoryName}-${group.groupName ?? 'all'}`}>
               <div className="mb-4 flex items-center gap-3">
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">{group.categoryName}</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#6a9172]">{group.categoryName}{group.groupName ? ` / ${group.groupName}` : ''}</span>
                 <span className="h-px flex-1 bg-[#dfe5da] dark:bg-[#34453d]" />
+                <button onClick={() => downloadAll(group.items)} disabled={group.items.length === 0} className="inline-flex items-center gap-1.5 rounded-full border border-[#dfe5da] px-3 py-1.5 text-[11px] font-bold text-[#315d43] transition-colors hover:border-[#9fbea0] hover:bg-[#f1f7ee] disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#40544a] dark:text-[#d7ead2] dark:hover:border-[#6a9172] dark:hover:bg-[#2d5140]"><Download size={13} /> Download all</button>
               </div>
 
               <div className="divide-y divide-[#dfe5da] overflow-hidden rounded-2xl border border-[#dfe5da] bg-[#fbfcf7] dark:divide-[#34453d] dark:border-[#34453d] dark:bg-[#1d2c25]">
+                {group.items.length === 0 && <p className="px-5 py-4 text-sm text-[#718078] dark:text-[#b6c5b8]">No downloadable files yet.</p>}
                 {group.items.map((item) => (
                   <div key={`${group.categoryName}-${item.title}`} className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                     <div>
-                      <h2 className="font-serif text-2xl tracking-[-0.03em] text-[#24332d] dark:text-[#edf2e9]">{item.title}</h2>
+                      <h2 className="text-base font-normal text-[#24332d] dark:text-[#edf2e9]">{item.title}</h2>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">

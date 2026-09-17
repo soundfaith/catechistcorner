@@ -5,8 +5,8 @@
     return response.status(405).json({ message: 'Method not allowed.' })
   }
 
-  if (!name || !email || !message) {
-    return response.status(400).json({ message: 'Name, email, and message are required.' })
+  if (!message || !String(message).trim()) {
+    return response.status(400).json({ message: 'Message is required.' })
   }
 
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'
@@ -37,8 +37,8 @@
     await transporter.sendMail({
       from: smtpUser,
       to: toEmail,
-      replyTo: email,
-      subject: `CatechistCorner ${type || 'Message'} from ${name}`,
+      ...(email ? { replyTo: email } : {}),
+      subject: `CatechistCorner ${type || 'Message'}${name ? ` from ${name}` : ''}`,
       text: [
         `Name: ${name}`,
         `Email: ${email}`,
